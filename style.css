@@ -1,0 +1,86 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(#1a2a6c, #0d1436);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #fff;
+}
+
+#game-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+#hud {
+  display: flex;
+  gap: 24px;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #000;
+}
+
+canvas {
+  background: #5c94fc;
+  border: 6px solid #222;
+  border-radius: 6px;
+  image-rendering: pixelated;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-width: 96vw;
+  height: auto;
+}
+
+#hint {
+  font-size: 13px;
+  opacity: 0.75;
+  margin: 0;
+}
+
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 56px);
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: 6px;
+  text-align: center;
+  padding: 20px;
+}
+
+#overlay.hidden {
+  display: none;
+}
+
+#overlay h1 {
+  margin: 0;
+  font-size: 36px;
+  text-shadow: 3px 3px 0 #000;
+}
+
+#overlay button {
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  background: #e52521;
+  color: white;
+  cursor: pointer;
+}
+
+#overlay button:hover {
+  background: #ff3b36;
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Plumber</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrap">
+    <div id="hud">
+      <span id="score">Score: 0</span>
+      <span id="coins">Coins: 0</span>
+      <span id="lives">Lives: 3</span>
+    </div>
+    <canvas id="game" width="960" height="540"></canvas>
+    <div id="overlay" class="hidden">
+      <h1 id="overlay-title">Game Over</h1>
+      <p id="overlay-text"></p>
+      <button id="overlay-btn">Restart</button>
+    </div>
+    <p id="hint">Arrow keys / A-D to move, Space or Up to jump. Stomp enemies, grab coins, reach the flag!</p>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
