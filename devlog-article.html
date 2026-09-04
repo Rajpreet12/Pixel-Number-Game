@@ -1,0 +1,562 @@
+<meta charset="UTF-8">
+<title>Pixel Plumber Devlog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf6f0;
+    --surface: #f2ebe0;
+    --ink: #241f1a;
+    --ink-dim: #5c5347;
+    --border: #e2d8c8;
+    --amber: #b5762a;
+    --amber-ink: #8a5a1e;
+    --teal: #276b78;
+    --code-bg: #221f24;
+    --code-ink: #ecdfc9;
+    --code-dim: #9a8f95;
+    --good: #4f7a3e;
+    --bad: #a8412f;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #18141c;
+      --surface: #211c26;
+      --ink: #f1e9dd;
+      --ink-dim: #b6a99a;
+      --border: #3a3240;
+      --amber: #ffb347;
+      --amber-ink: #ffc670;
+      --teal: #6fc3d1;
+      --code-bg: #100e13;
+      --code-ink: #f1e9dd;
+      --code-dim: #8b8290;
+      --good: #7fbf6a;
+      --bad: #e3735c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #18141c;
+    --surface: #211c26;
+    --ink: #f1e9dd;
+    --ink-dim: #b6a99a;
+    --border: #3a3240;
+    --amber: #ffb347;
+    --amber-ink: #ffc670;
+    --teal: #6fc3d1;
+    --code-bg: #100e13;
+    --code-ink: #f1e9dd;
+    --code-dim: #8b8290;
+    --good: #7fbf6a;
+    --bad: #e3735c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 100px;
+  }
+
+  .eyebrow {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--amber-ink);
+    display: inline-block;
+    margin-bottom: 18px;
+  }
+
+  h1.title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(32px, 6vw, 48px);
+    line-height: 1.12;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+
+  .dek {
+    font-size: 19px;
+    color: var(--ink-dim);
+    margin: 0 0 26px;
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--ink-dim);
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .meta a {
+    color: var(--amber-ink);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+  .meta a:hover { color: var(--teal); }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 44px;
+  }
+  nav.toc .toc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 0 0 12px;
+  }
+  nav.toc ol {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    columns: 2;
+    gap: 8px 24px;
+  }
+  nav.toc li { break-inside: avoid; margin-bottom: 8px; }
+  nav.toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  nav.toc a:hover { color: var(--amber-ink); }
+  nav.toc .n {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--amber-ink);
+    margin-right: 8px;
+  }
+
+  section { margin-bottom: 52px; }
+
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0 0 8px;
+    padding-top: 8px;
+    text-wrap: balance;
+    scroll-margin-top: 20px;
+  }
+  h2 .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--amber-ink);
+    font-weight: 600;
+    margin-right: 10px;
+  }
+
+  h3 {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin: 28px 0 10px;
+  }
+
+  p { margin: 0 0 16px; }
+  ul, ol.plain { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 8px; }
+
+  strong { color: var(--ink); font-weight: 700; }
+
+  a.inline { color: var(--teal); text-decoration-color: rgba(39,107,120,0.4); }
+
+  code.snip {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+
+  .codeblock {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 14px 0 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .codeblock .cap {
+    display: block;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    color: var(--code-dim);
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .codeblock pre { margin: 0; white-space: pre; }
+  .tok-kw { color: #e39fd6; }
+  .tok-fn { color: #8ecbe0; }
+  .tok-str { color: #d7b876; }
+  .tok-com { color: var(--code-dim); font-style: italic; }
+  .tok-num { color: #b6d492; }
+
+  .table-wrap { overflow-x: auto; margin: 14px 0 22px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    min-width: 480px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; }
+
+  .callout {
+    border-left: 3px solid var(--amber);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 18px 0;
+    font-size: 15.5px;
+  }
+  .callout.bad { border-left-color: var(--bad); }
+  .callout.good { border-left-color: var(--good); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--bad);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .callout.good .tag { color: var(--good); }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0 22px;
+    overflow-x: auto;
+  }
+  .diagram svg { display: block; margin: 0 auto; min-width: 560px; }
+
+  .bylist { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+  .bylist li {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .bylist .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--amber-ink);
+    font-size: 15px;
+    flex: none;
+    width: 5ch;
+    text-align: right;
+  }
+
+  footer.resources {
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+    margin-top: 8px;
+  }
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 700;
+    text-decoration: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+  .cta-link:hover { background: var(--amber-ink); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .cta-link { background: var(--amber); color: #100e13; }
+    :root:not([data-theme="light"]) .cta-link:hover { background: var(--amber-ink); }
+  }
+  :root[data-theme="dark"] .cta-link { background: var(--amber); color: #100e13; }
+  :root[data-theme="dark"] .cta-link:hover { background: var(--amber-ink); }
+</style>
+
+<div class="page">
+  <span class="eyebrow">DEVLOG</span>
+  <h1 class="title">Building Pixel Plumber</h1>
+  <p class="dek">A weekend platformer clone turned into a lesson on trademark risk, an axis-order collision bug that silently ate coin pickups, and why "I played it and it worked" is not the same claim as "it's completable."</p>
+  <div class="meta">
+    <span>5 levels &middot; vanilla Canvas + JS &middot; no build step</span>
+    <a href="https://pixel-plumber.vercel.app" class="inline" style="color:var(--amber-ink);border-bottom:1px solid currentColor;">Play it live &rarr;</a>
+  </div>
+
+  <nav class="toc" aria-label="Table of contents">
+    <p class="toc-label">Contents</p>
+    <ol>
+      <li><a href="#problem"><span class="n">01</span>The Problem</a></li>
+      <li><a href="#solution"><span class="n">02</span>The Approach</a></li>
+      <li><a href="#built"><span class="n">03</span>How I Built It</a></li>
+      <li><a href="#architecture"><span class="n">04</span>Architecture Deep Dive</a></li>
+      <li><a href="#numbers"><span class="n">05</span>By the Numbers</a></li>
+      <li><a href="#lessons"><span class="n">06</span>Challenges &amp; Lessons</a></li>
+      <li><a href="#conclusion"><span class="n">07</span>Conclusion</a></li>
+      <li><a href="#resources"><span class="n">08</span>Resources</a></li>
+    </ol>
+  </nav>
+
+  <section id="problem">
+    <h2><span class="num">01</span>The Problem</h2>
+    <p>A tiny arcade platformer sounds like a weekend toy: draw a canvas, add gravity, let a rectangle jump over other rectangles. It stays a toy right up until the plan is to actually <em>ship</em> it — post a public link, put it in front of strangers on LinkedIn and an AWS community. That's where three problems that don't matter for a private prototype suddenly do:</p>
+    <ul>
+      <li><strong>The obvious character choice is a trademark landmine.</strong> The natural instinct for a retro platformer is the cap, the mustache, the red overalls. Fine for something only I ever open. Not fine for a public, sharable link — Nintendo enforces the Mario IP aggressively, and a lookalike clone with your name on it is exactly the kind of thing that gets a takedown notice.</li>
+      <li><strong>Hand-typed level coordinates don't scale.</strong> One level with a dozen platforms, typed as literal tile numbers, is manageable by eye. Five levels — each needing 4 to 10 gaps and several bonus platforms not to overlap anything — is not. Every manually computed offset is a chance to place two things where they shouldn't touch.</li>
+      <li><strong>"I played it and it worked" isn't proof.</strong> A human playtester — including me — samples the first 20 seconds of a level far more thoroughly than the last 20. That's exactly where a level-breaking bug hides, and exactly where mine did.</li>
+    </ul>
+  </section>
+
+  <section id="solution">
+    <h2><span class="num">02</span>The Approach</h2>
+    <p>Three decisions shaped everything that followed:</p>
+    <ul>
+      <li><strong>Original IP, not a clone.</strong> Its own name (Pixel Plumber), its own logo mark, its own mascot design — close enough to the genre to read instantly as "platformer," far enough from Mario's specific silhouette to be safe to post under my own name.</li>
+      <li><strong>Levels as data, not hand-placed pixels.</strong> Each level is a short list of <code class="snip">{len, gap}</code> tile-run segments, expanded into real platform coordinates by one function. Bonus platforms are described as "put one on segment 4," not as raw x/y numbers — the placement math happens once, in one place, instead of five times by hand.</li>
+      <li><strong>A bot that never gets tired.</strong> Before any level shipped, a small script played it end-to-end: hold right, jump when a pit or enemy comes up, record whether it reaches the flag. It doesn't get bored halfway through the way a human tester does — which is exactly how it caught a level that was, at one point, mathematically unbeatable.</li>
+    </ul>
+  </section>
+
+  <section id="built">
+    <h2><span class="num">03</span>How I Built It</h2>
+
+    <h3>Step 1 — Engine core</h3>
+    <p>No framework, no build step — one canvas, one <code class="snip">requestAnimationFrame</code> loop, and a handful of physics constants tuned by feel:</p>
+    <div class="codeblock">
+      <span class="cap">game.js</span>
+      <pre><span class="tok-kw">const</span> GRAVITY = <span class="tok-num">0.6</span>, FRICTION = <span class="tok-num">0.8</span>;
+<span class="tok-kw">const</span> MOVE_SPEED = <span class="tok-num">4.2</span>, JUMP_FORCE = <span class="tok-num">-13.5</span>, TILE = <span class="tok-num">40</span>;
+
+<span class="tok-kw">function</span> <span class="tok-fn">loop</span>() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}</pre>
+    </div>
+
+    <h3>Step 2 — Collision, and the bug hiding in the obvious version</h3>
+    <p>Standard AABB collision: move on one axis, push the player back out of anything it now overlaps. The first version resolved horizontal movement, then vertical. That ordering has a quiet failure mode — covered in full in <a href="#lessons" class="inline">Lessons</a> — that silently broke coin pickups near platform edges.</p>
+
+    <h3>Step 3 — Levels as declarative data</h3>
+    <p>Instead of typing absolute tile coordinates for every platform, each level is a chain of ground lengths and gap widths. One function turns that into real segments — so a gap is always exactly as wide as intended, never off by an arithmetic slip:</p>
+    <div class="codeblock">
+      <span class="cap">game.js — buildGround()</span>
+      <pre><span class="tok-kw">function</span> <span class="tok-fn">buildGround</span>(pattern) {
+  <span class="tok-kw">const</span> segments = [];
+  <span class="tok-kw">let</span> cursor = <span class="tok-num">0</span>;
+  <span class="tok-kw">for</span> (<span class="tok-kw">const</span> seg <span class="tok-kw">of</span> pattern) {
+    segments.push([cursor, cursor + seg.len]);
+    cursor += seg.len + seg.gap;
+  }
+  <span class="tok-kw">return</span> segments;
+}
+
+<span class="tok-com">// Level 3, "Rusty Pipeworks" — read straight off the spec:</span>
+<span class="tok-com">// 8 tiles of ground, a 2-tile pit, 6 tiles of ground, a 2-tile pit...</span>
+pattern: [
+  { len: <span class="tok-num">8</span>, gap: <span class="tok-num">2</span> }, { len: <span class="tok-num">6</span>, gap: <span class="tok-num">2</span> }, { len: <span class="tok-num">8</span>, gap: <span class="tok-num">2</span> },
+  { len: <span class="tok-num">10</span>, gap: <span class="tok-num">2</span> }, { len: <span class="tok-num">10</span>, gap: <span class="tok-num">2</span> }, { len: <span class="tok-num">12</span>, gap: <span class="tok-num">2</span> },
+  { len: <span class="tok-num">14</span>, gap: <span class="tok-num">2</span> }, { len: <span class="tok-num">18</span>, gap: <span class="tok-num">0</span> },
+],</pre>
+    </div>
+
+    <h3>Step 4 — Bonus platforms that place themselves</h3>
+    <p>Floating coin platforms used to be hand-placed by tile number. That's exactly where the worst bug in this project came from (see Lessons). The fix: describe a bonus platform as "somewhere safely inside segment 4," and let the engine center it with margin on both sides automatically:</p>
+    <div class="codeblock">
+      <span class="cap">game.js — auto-centered bonus platforms</span>
+      <pre><span class="tok-kw">for</span> (<span class="tok-kw">const</span> segIdx <span class="tok-kw">of</span> spec.bonusSegments || []) {
+  <span class="tok-kw">const</span> [s, e] = segments[segIdx];
+  <span class="tok-kw">const</span> segW = e - s;
+  <span class="tok-kw">if</span> (segW < <span class="tok-num">7</span>) <span class="tok-kw">continue</span>; <span class="tok-com">// too narrow to fit one safely — skip it</span>
+  <span class="tok-kw">const</span> w = Math.min(<span class="tok-num">3</span>, segW - <span class="tok-num">4</span>);
+  <span class="tok-kw">const</span> x = s + Math.floor((segW - w) / <span class="tok-num">2</span>);
+  platforms.push({ x: x * TILE, y: <span class="tok-num">9</span> * TILE, w: w * TILE, h: TILE });
+}</pre>
+    </div>
+
+    <h3>Step 5 — A bot that plays the level for me</h3>
+    <p>Before any level shipped, a headless script held the right-arrow key and jumped proactively whenever a pit or enemy entered a lookahead window, logging deaths, coin pickups, and whether it ever reached the flag:</p>
+    <div class="codeblock">
+      <span class="cap">verification harness</span>
+      <pre><span class="tok-kw">const</span> lookX = player.x + <span class="tok-num">46</span>;
+<span class="tok-kw">const</span> nearPit = level.pits.some(p => lookX > p.x - <span class="tok-num">6</span> && lookX < p.x + p.w + <span class="tok-num">6</span>);
+<span class="tok-kw">const</span> nearEnemy = level.enemies.some(e =>
+  e.alive && Math.abs(e.x - player.x) < <span class="tok-num">55</span> && Math.abs(e.y - player.y) < <span class="tok-num">70</span>
+);
+keys.jump = player.onGround && (nearPit || nearEnemy);</pre>
+    </div>
+    <p>Run against all five levels, it either reports <code class="snip">WON at frame N</code> or gets stuck — which is exactly how level 4 revealed itself as unbeatable before a single human ever hit play.</p>
+
+    <h3>Step 6 — Original branding</h3>
+    <p>Once the plan became "share this publicly," the mascot got a full redesign: teal overalls and an amber cap instead of red, goggles instead of a mustache, plus an original pixel-badge logo for the marquee — its own visual identity, not a Mario recolor.</p>
+
+    <h3>Step 7 — Shipping it</h3>
+    <p>The whole game — HTML, CSS, and JS — lives in one self-contained file, which made distribution trivial: no bundler, no assets to path-fix. It's deployed to Vercel for a stable, no-login-required public URL, and mirrored as a Claude Artifact for quick iteration and sharing.</p>
+  </section>
+
+  <section id="architecture">
+    <h2><span class="num">04</span>Architecture Deep Dive</h2>
+
+    <h3>Physics constants</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Constant</th><th class="num">Value</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td><code class="snip">GRAVITY</code></td><td class="num">0.6 px/frame²</td><td>Downward acceleration each frame</td></tr>
+          <tr><td><code class="snip">FRICTION</code></td><td class="num">0.8</td><td>Damps velocity; caps effective run speed at ~3.6px/frame, below the nominal 4.2 cap</td></tr>
+          <tr><td><code class="snip">JUMP_FORCE</code></td><td class="num">-13.5 px/frame</td><td>Initial upward velocity on jump</td></tr>
+          <tr><td><code class="snip">TILE</code></td><td class="num">40 px</td><td>Grid unit for all level authoring</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Those four numbers set hard limits on level design: max jump height works out to <strong>≈152px (3.8 tiles)</strong>, and max horizontal distance covered during a full jump arc to <strong>≈162px (4 tiles)</strong>. Every pit in every level is capped at 2 tiles wide — comfortably inside that budget, with margin for imperfect timing.</p>
+
+    <h3>Collision resolution order</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram comparing horizontal-first versus vertical-first collision resolution">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-dim)"/>
+          </marker>
+        </defs>
+        <text x="14" y="24" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--bad)" font-weight="600">✕ BEFORE — horizontal resolved first</text>
+        <rect x="14" y="40" width="330" height="60" rx="8" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="24" y="70" width="120" height="8" fill="var(--ink-dim)"/>
+        <rect x="180" y="46" width="60" height="48" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="210" y="118" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12.5" fill="var(--ink-dim)">landing on top reads as hitting the side —</text>
+        <text x="210" y="134" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12.5" fill="var(--ink-dim)">player gets shoved back, coins missed</text>
+
+        <text x="376" y="24" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--good)" font-weight="600">✓ AFTER — vertical resolved first</text>
+        <rect x="376" y="40" width="330" height="60" rx="8" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+        <rect x="386" y="70" width="120" height="8" fill="var(--ink-dim)"/>
+        <rect x="542" y="46" width="60" height="48" fill="none" stroke="var(--good)" stroke-width="2"/>
+        <text x="572" y="118" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12.5" fill="var(--ink-dim)">player snaps onto the platform top</text>
+        <text x="572" y="134" text-anchor="middle" font-family="Source Sans 3, sans-serif" font-size="12.5" fill="var(--ink-dim)">before the side-check ever runs</text>
+
+        <line x1="355" y1="70" x2="365" y2="70" stroke="var(--ink-dim)" stroke-width="0" />
+        <text x="360" y="76" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="var(--ink-dim)">→</text>
+      </svg>
+    </div>
+
+    <h3>Level data schema</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code class="snip">pattern</code></td><td><code class="snip">{len,gap}[]</code></td><td>Ground-strip lengths and pit widths, in tiles</td></tr>
+          <tr><td><code class="snip">bonusSegments</code></td><td><code class="snip">number[]</code></td><td>Indices of segments that get an auto-centered floating coin platform</td></tr>
+          <tr><td><code class="snip">enemies</code></td><td><code class="snip">{x,range,dir}[]</code></td><td>Patrol start point, back-and-forth range, initial direction</td></tr>
+          <tr><td><code class="snip">enemySpeed</code></td><td><code class="snip">number</code></td><td>Per-level patrol speed multiplier — the main difficulty knob</td></tr>
+          <tr><td><code class="snip">flagX</code></td><td><code class="snip">number</code></td><td>Tile position of the level's finish flag</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="numbers">
+    <h2><span class="num">05</span>By the Numbers</h2>
+    <ul class="bylist">
+      <li><span class="stat-num">5</span> levels, each verified completable end-to-end by the automated bot before shipping</li>
+      <li><span class="stat-num">504</span> tiles of combined level length (~20,160px) — roughly 6× the length of the original single-level prototype</li>
+      <li><span class="stat-num">34</span> pits total across all five levels, none wider than 2 tiles (safely under the ~4-tile max jump distance)</li>
+      <li><span class="stat-num">36</span> enemies total, patrol speed scaling from 1.6px/frame on level 1 to 2.4px/frame on level 5</li>
+      <li><span class="stat-num">2</span> shipping-blocking bugs the bot caught that manual playtesting had missed</li>
+    </ul>
+  </section>
+
+  <section id="lessons">
+    <h2><span class="num">06</span>Challenges &amp; Lessons Learned</h2>
+
+    <h3>1. The axis-order collision bug</h3>
+    <p>The original collision code resolved horizontal movement before vertical. If the player was moving sideways at the exact moment they should have landed on a platform's top, the horizontal check ran first, saw an overlap, and read it as hitting the platform's <em>side</em> — shoving the player backward instead of letting them land. It silently broke coin pickups near platform edges too, since the coin check happened after a landing that never correctly occurred.</p>
+    <div class="callout bad">
+      <span class="tag">Failure mode</span>
+      <p>Player lands on any platform while still holding a direction key → gets bounced back off it instead, sometimes losing all horizontal momentum mid-jump.</p>
+    </div>
+    <div class="callout good">
+      <span class="tag">Fix</span>
+      <p>Resolve vertical collision <em>before</em> horizontal. By the time the horizontal pass runs, a successful landing has already snapped the player exactly onto the platform's surface — with no vertical overlap left for the side-check to misread.</p>
+    </div>
+
+    <h3>2. The bonus platform that made a level unbeatable</h3>
+    <p>Hand-placed bonus platforms used the same "extends to the floor" height as ground platforms. On one level, a bonus platform's collision box reached all the way down and overlapped the pit beside it — turning a floating coin bonus into a solid wall blocking the only path across. The automated bot died at the exact same tile <strong>39 times in a row</strong> before I noticed the pattern wasn't bad luck.</p>
+    <div class="callout bad">
+      <span class="tag">Caught by</span>
+      <p>The verification bot — a human tester playing the first minute of five different levels is very unlikely to grind against the same wall 39 times and notice it's not chance.</p>
+    </div>
+    <div class="callout good">
+      <span class="tag">Fix</span>
+      <p>Give bonus platforms a thin, fixed height instead of one that scales to the floor, and auto-center every one inside its segment with margin, rather than trusting hand-picked coordinates (Step 4, above).</p>
+    </div>
+
+    <h3>3. Browser automation speaks a different dialect</h3>
+    <p>Verifying the game in a remote browser-automation tool, none of the arrow-key presses registered — at all. The tool's synthetic key events set <code class="snip">event.key</code> but left <code class="snip">event.code</code> empty, and the input handler only ever checked <code class="snip">event.code</code>. A real keyboard sets both; this one didn't. The fix was reading both and normalizing:</p>
+    <div class="codeblock">
+      <span class="cap">game.js — normalized key handling</span>
+      <pre><span class="tok-kw">function</span> <span class="tok-fn">setKey</span>(e, val) {
+  <span class="tok-kw">if</span> (e.code) keys[e.code] = val;
+  <span class="tok-kw">if</span> (e.key) keys[e.key] = val;
+}</pre>
+    </div>
+
+    <h3>4. Choosing where to ship it</h3>
+    <p>itch.io was the first stop — it's where platformers like this belong — but hit a Cloudflare bot-check loop and login friction that stalled the whole path. Vercel ended up the faster route to something genuinely public: no account needed to <em>view</em> it, no CAPTCHA in the way, one deploy command.</p>
+  </section>
+
+  <section id="conclusion">
+    <h2><span class="num">07</span>Conclusion</h2>
+    <p>None of this — the axis-order fix, the auto-centered platforms, the bot — is exotic engineering. It's a small platformer. But the failure modes it hit are the exact same ones that show up in far bigger systems: hand-authored data drifting out of sync with itself, a boundary condition that only breaks under a very specific combination of state, and the gap between "I tried it and it seemed fine" and "I can prove it works." A script that plays the whole game and reports pass or fail closed that gap here in minutes; it's worth having one before trusting anything you built by eye.</p>
+    <p>The other half of the lesson was less technical: the moment a hobby project has an audience, the easy defaults — a borrowed character, a hand-typed level, a spot-check playtest — stop being harmless shortcuts.</p>
+  </section>
+
+  <footer class="resources" id="resources">
+    <h2 style="margin-top:0;"><span class="num">08</span>Resources</h2>
+    <p>Everything above runs in your browser, no install and no account required.</p>
+    <a class="cta-link" href="https://pixel-plumber.vercel.app">▶ Play Pixel Plumber</a>
+  </footer>
+</div>

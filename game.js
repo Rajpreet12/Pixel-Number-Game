@@ -351,19 +351,22 @@ function drawPlayer() {
   ctx.translate(sx + player.w / 2, player.y + player.h / 2);
   ctx.scale(player.facing, 1);
 
-  // Body
-  ctx.fillStyle = '#e52521';
+  // Overalls
+  ctx.fillStyle = '#1f7a8c';
   ctx.fillRect(-player.w / 2, -player.h / 2 + 14, player.w, player.h - 14);
-  // Head
+  // Face
   ctx.fillStyle = '#f6b98f';
   ctx.fillRect(-player.w / 2 + 4, -player.h / 2, player.w - 8, 18);
   // Cap
-  ctx.fillStyle = '#e52521';
+  ctx.fillStyle = '#ffb347';
   ctx.fillRect(-player.w / 2 + 2, -player.h / 2 - 4, player.w - 4, 8);
   ctx.fillRect(player.w / 2 - 10, -player.h / 2, 12, 4);
-  // Mustache
-  ctx.fillStyle = '#3b2411';
-  ctx.fillRect(-2, -player.h / 2 + 12, player.w / 2 - 2, 4);
+  // Goggles
+  ctx.fillStyle = '#2a2032';
+  ctx.fillRect(-player.w / 2 + 3, -player.h / 2 + 6, player.w - 6, 5);
+  ctx.fillStyle = '#5c94fc';
+  ctx.fillRect(-player.w / 2 + 5, -player.h / 2 + 6, 6, 5);
+  ctx.fillRect(player.w / 2 - 11, -player.h / 2 + 6, 6, 5);
 
   ctx.restore();
 }
