@@ -1,5 +1,5 @@
 <meta charset="UTF-8">
-<title>Pixel Plumber Devlog</title>
+<title>Rebuilding My Childhood, Pixel by Pixel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -339,9 +339,9 @@
 </style>
 
 <div class="page">
-  <h1 class="sr-only">Building Pixel Plumber</h1>
+  <h1 class="sr-only">Rebuilding My Childhood, Pixel by Pixel</h1>
   <figure class="hero">
-    <svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pixel Plumber cover art: the mascot standing beside a coin platform and a goomba, under the title Building Pixel Plumber, A 5-Level Platformer Devlog">
+    <svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pixel Plumber cover art: the mascot standing beside a coin platform and a goomba, under the eyebrow My Childhood, Rebuilt and the title Pixel Plumber, A 5-Level Platformer Devlog">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#3f6fd6"/>
@@ -416,14 +416,14 @@
         <circle cx="76" cy="43" r="4" fill="#eaf6ff"/>
       </g>
       <g text-anchor="middle" filter="url(#glow)" font-family="'Press Start 2P', monospace">
-        <text x="600" y="118" font-size="20" letter-spacing="4" fill="#f2ede6">BUILDING</text>
+        <text x="600" y="118" font-size="20" letter-spacing="4" fill="#f2ede6">MY CHILDHOOD, REBUILT</text>
         <text x="600" y="184" font-size="56" letter-spacing="3" fill="#ffb347" stroke="#5a2d0c" stroke-width="6" paint-order="stroke">PIXEL</text>
         <text x="600" y="248" font-size="56" letter-spacing="3" fill="#ffb347" stroke="#5a2d0c" stroke-width="6" paint-order="stroke">PLUMBER</text>
       </g>
       <text x="600" y="284" text-anchor="middle" font-family="'Press Start 2P', monospace" font-size="16" letter-spacing="2" fill="#f2ede6" filter="url(#glow)">A 5-LEVEL PLATFORMER DEVLOG</text>
     </svg>
   </figure>
-  <p class="dek">A weekend platformer clone turned into a lesson on trademark risk, an axis-order collision bug that silently ate coin pickups, and why "I played it and it worked" is not the same claim as "it's completable."</p>
+  <p class="dek">I wanted to rebuild the platformer I grew up on, just for the nostalgia of it. What I actually got: a lesson on trademark risk, an axis-order collision bug that silently ate coin pickups, and why "I played it and it worked" is not the same claim as "it's completable."</p>
   <div class="meta">
     <span>5 levels &middot; vanilla Canvas + JS &middot; no build step</span>
     <a href="https://pixel-plumber.vercel.app" class="inline" style="color:var(--amber-ink);border-bottom:1px solid currentColor;">Play it live &rarr;</a>
@@ -445,7 +445,7 @@
 
   <section id="problem">
     <h2><span class="num">01</span>The Problem</h2>
-    <p>A tiny arcade platformer sounds like a weekend toy: draw a canvas, add gravity, let a rectangle jump over other rectangles. It stays a toy right up until the plan is to actually <em>ship</em> it — post a public link, put it in front of strangers on LinkedIn and an AWS community. That's where three problems that don't matter for a private prototype suddenly do:</p>
+    <p>It started as nostalgia — rebuild the platformer I grew up on, just for the fun of seeing it run again. That's where it stayed a toy: draw a canvas, add gravity, let a rectangle jump over other rectangles. It stopped being a toy the moment the plan became to actually <em>ship</em> it — post a public link, put it in front of strangers on LinkedIn and an AWS community. That's where three problems that don't matter for a private prototype suddenly do:</p>
     <ul>
       <li><strong>The obvious character choice is a trademark landmine.</strong> The natural instinct for a retro platformer is the cap, the mustache, the red overalls. Fine for something only I ever open. Not fine for a public, sharable link — Nintendo enforces the Mario IP aggressively, and a lookalike clone with your name on it is exactly the kind of thing that gets a takedown notice.</li>
       <li><strong>Hand-typed level coordinates don't scale.</strong> One level with a dozen platforms, typed as literal tile numbers, is manageable by eye. Five levels — each needing 4 to 10 gaps and several bonus platforms not to overlap anything — is not. Every manually computed offset is a chance to place two things where they shouldn't touch.</li>
