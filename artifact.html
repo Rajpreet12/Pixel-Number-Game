@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <title>Pixel Plumber</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -246,7 +247,23 @@
     align-items: center;
     gap: 18px;
     padding: 4px 6px 2px;
+    position: relative;
   }
+
+  .mute-btn {
+    margin-left: auto;
+    font-size: 18px;
+    background: linear-gradient(180deg, var(--key-top), var(--key));
+    border: none;
+    border-radius: 6px;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 var(--shell-deep), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .mute-btn:hover { filter: brightness(1.15); }
+  .mute-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
 
   .control {
     display: flex;
@@ -360,6 +377,7 @@
         <kbd class="wide">Space</kbd>
         <span class="does">or &uarr; / W to jump</span>
       </div>
+      <button id="mute-btn" class="mute-btn" aria-label="Mute">&#128266;</button>
     </div>
   </div>
 
@@ -387,6 +405,45 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
+const muteBtn = document.getElementById('mute-btn');
+
+// ---- Retro sound effects (synthesized, no audio files) ----
+let audioCtx = null;
+let muted = false;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq, start, duration, { type = 'square', volume = 0.16, slideTo = null } = {}) {
+  if (muted || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+  if (slideTo) osc.frequency.linearRampToValueAtTime(slideTo, audioCtx.currentTime + start + duration);
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime + start);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime + start);
+  osc.stop(audioCtx.currentTime + start + duration);
+}
+const sfx = {
+  jump: () => tone(440, 0, 0.12, { type: 'square', slideTo: 740 }),
+  coin: () => { tone(988, 0, 0.07, { type: 'square' }); tone(1319, 0.06, 0.12, { type: 'square' }); },
+  stomp: () => tone(220, 0, 0.1, { type: 'square', slideTo: 90 }),
+  hit: () => tone(180, 0, 0.35, { type: 'sawtooth', slideTo: 60 }),
+  levelUp: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, { type: 'square' })); },
+  win: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.11, 0.22, { type: 'square' })); },
+};
+if (muteBtn) {
+  muteBtn.addEventListener('click', () => {
+    ensureAudio();
+    muted = !muted;
+    muteBtn.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+    muteBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+  });
+}
 
 const keys = {};
 const NAV_KEYS = ['Space', ' ', 'Spacebar', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -395,10 +452,12 @@ function setKey(e, val) {
   if (e.key) keys[e.key] = val;
 }
 window.addEventListener('keydown', e => {
+  ensureAudio();
   setKey(e, true);
   if (NAV_KEYS.includes(e.code) || NAV_KEYS.includes(e.key)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { setKey(e, false); });
+canvas.addEventListener('pointerdown', ensureAudio);
 
 function isDown(...names) {
   return names.some(n => keys[n]);
@@ -437,7 +496,10 @@ function makeLevel(spec) {
     if (segW < 7) continue;
     const w = Math.min(3, segW - 4);
     const x = s + Math.floor((segW - w) / 2);
-    const platform = { x: x * TILE, y: 9 * TILE, w: w * TILE, h: TILE };
+    // A thin slab, not a full tile: dropping the platform to make the jump-up
+    // easier also shrank the gap above a standing player's head to zero,
+    // which blocked jumping at all while standing underneath it.
+    const platform = { x: x * TILE, y: 10 * TILE, w: w * TILE, h: 16 };
     platforms.push(platform);
     bonusPlatforms.push(platform);
   }
@@ -458,10 +520,27 @@ function makeLevel(spec) {
   }
 
   const speed = spec.enemySpeed || 1.6;
-  const enemies = (spec.enemies || []).map(e => ({
-    x: e.x * TILE, y: (e.row || 12) * TILE - 32, w: 32, h: 32, dir: e.dir,
-    range: [e.range[0] * TILE, e.range[1] * TILE], alive: true, speed,
-  }));
+  const lastSegment = segments[segments.length - 1];
+  const enemies = (spec.enemies || []).map(e => {
+    // Keep every patrol at least 3 tiles clear of the pit at the end of its
+    // segment — an enemy patrolling right up to a pit's edge can force a
+    // dodge-jump that also eats the runway the very next jump needs.
+    // If x sits over a pit (no segment contains it), "home" is the nearest
+    // segment before it — falling back to the *last* segment here would
+    // relocate the enemy's whole range to the far end of the level.
+    const home = segments.find(([s, en]) => e.x >= s && e.x < en)
+      || [...segments].reverse().find(([s]) => s <= e.x)
+      || segments[0];
+    const [segStart, segEnd] = home;
+    const isLast = home === lastSegment;
+    const lower = Math.max(e.range[0], segStart + 1);
+    const upper = isLast ? Math.max(e.range[1], lower + 1) : Math.max(Math.min(e.range[1], segEnd - 3), lower + 1);
+    const x = Math.min(Math.max(e.x, lower), upper);
+    return {
+      x: x * TILE, y: (e.row || 12) * TILE - 32, w: 32, h: 32, dir: e.dir,
+      range: [lower * TILE, upper * TILE], alive: true, speed,
+    };
+  });
 
   const lastEnd = segments[segments.length - 1][1];
   const flag = { x: spec.flagX * TILE, y: 4 * TILE, w: 12, h: 8 * TILE };
@@ -567,6 +646,7 @@ function resetGame() {
 function loseLife() {
   lives--;
   updateHud();
+  sfx.hit();
   if (lives <= 0) {
     state = 'dead';
     showOverlay('Game Over', `Final score: ${score}`, 'Restart');
@@ -619,6 +699,7 @@ function update() {
   if (isDown('Space', ' ', 'Spacebar', 'ArrowUp', 'Up', 'KeyW', 'w', 'W') && player.onGround) {
     player.vy = JUMP_FORCE;
     player.onGround = false;
+    sfx.jump();
   }
 
   player.vy += GRAVITY;
@@ -664,12 +745,13 @@ function update() {
       coins++;
       score += 100;
       updateHud();
+      sfx.coin();
     }
   }
 
   for (const e of level.enemies) {
     if (!e.alive) continue;
-    e.x += e.dir * 1.6;
+    e.x += e.dir * e.speed;
     if (e.x < e.range[0] || e.x + e.w > e.range[1]) e.dir *= -1;
 
     if (rectsOverlap(player, e)) {
@@ -680,6 +762,7 @@ function update() {
         player.vy = JUMP_FORCE * 0.6;
         score += 200;
         updateHud();
+        sfx.stomp();
       } else if (player.invuln === 0) {
         loseLife();
         player.invuln = 90;
@@ -692,9 +775,11 @@ function update() {
     if (levelIndex < LEVELS.length - 1) {
       state = 'levelup';
       showOverlay(`Level ${levelIndex + 1} Complete!`, `Score: ${score} — onward to level ${levelIndex + 2}`, 'Next Level');
+      sfx.levelUp();
     } else {
       state = 'won';
       showOverlay('You Win!', `All ${LEVELS.length} levels cleared — Score: ${score} | Coins: ${coins}`, 'Play Again');
+      sfx.win();
     }
   }
 
