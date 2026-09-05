@@ -1,26 +1,928 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pixel Plumber</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div id="game-wrap">
-    <div id="hud">
-      <span id="score">Score: 0</span>
-      <span id="coins">Coins: 0</span>
-      <span id="lives">Lives: 3</span>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell: #1b1420;
+    --shell-deep: #100b14;
+    --shell-edge: #2c2233;
+    --marquee: #ffb347;
+    --marquee-dim: #7a5a2e;
+    --red: #e8483f;
+    --sky: #5c94fc;
+    --text: #f3ead9;
+    --text-dim: #b0a0ba;
+    --key: #2a2032;
+    --key-top: #392c44;
+    --key-text: #e9dfe0;
+    --screen-border: #0a070c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 900px 600px at 50% 0%, #241a2c 0%, var(--shell-deep) 60%),
+      var(--shell-deep);
+    color: var(--text);
+    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .cabinet {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  /* ---- Marquee ---- */
+  .marquee {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    filter: drop-shadow(0 0 6px rgba(255, 179, 71, 0.5));
+  }
+
+  .marquee h1 {
+    margin: 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(20px, 4.5vw, 34px);
+    letter-spacing: 2px;
+    color: var(--marquee);
+    text-shadow:
+      0 0 6px rgba(255, 179, 71, 0.65),
+      0 0 22px rgba(255, 179, 71, 0.35),
+      0 3px 0 #6b3f14;
+    text-wrap: balance;
+  }
+
+  .marquee .tag {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee h1 { animation: flicker 5s infinite; }
+  }
+  @keyframes flicker {
+    0%, 92%, 100% { opacity: 1; }
+    93% { opacity: 0.75; }
+    94% { opacity: 1; }
+    95% { opacity: 0.6; }
+    96% { opacity: 1; }
+  }
+
+  /* ---- Cabinet shell around the screen ---- */
+  .shell {
+    width: 100%;
+    background:
+      linear-gradient(180deg, var(--shell-edge) 0%, var(--shell) 12%, var(--shell) 88%, var(--shell-edge) 100%);
+    border-radius: 18px;
+    padding: 18px 18px 22px;
+    box-shadow:
+      0 24px 60px -20px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 -1px 0 rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* ---- Scoreboard strip ---- */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--shell-deep);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    font-family: 'Press Start 2P', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(9px, 2.4vw, 13px);
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
+  .stat .label {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+  .stat.score .value { color: var(--marquee); }
+  .stat.coins .value { color: #ffd54a; }
+  .stat.lives .value { color: var(--red); }
+
+  /* ---- Screen ---- */
+  .screen-frame {
+    position: relative;
+    border-radius: 10px;
+    padding: 10px;
+    background: linear-gradient(155deg, #3a2d44, var(--screen-border) 40%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  .screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 960 / 540;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #5c94fc;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.55);
+  }
+
+  canvas#game {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.12) 0px,
+      rgba(0,0,0,0.12) 1px,
+      transparent 2px,
+      transparent 3px
+    );
+    mix-blend-mode: multiply;
+    opacity: 0.5;
+  }
+
+  .screen-glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, rgba(255,255,255,0.10) 0%, transparent 30%);
+  }
+
+  /* ---- Overlay ---- */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 7, 12, 0.86);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    padding: 20px;
+  }
+  #overlay.hidden { display: none; }
+
+  #overlay-title {
+    margin: 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(16px, 4vw, 26px);
+    color: var(--marquee);
+    text-shadow: 0 0 14px rgba(255,179,71,0.5);
+    text-wrap: balance;
+  }
+
+  #overlay-text {
+    margin: 0;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  #overlay-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 6px;
+    background: var(--red);
+    color: #fff2ef;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #9c2a24, 0 6px 14px rgba(0,0,0,0.4);
+    transition: transform 0.08s ease;
+  }
+  #overlay-btn:hover { background: #ff5147; }
+  #overlay-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #9c2a24; }
+  #overlay-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+
+  /* ---- Control deck ---- */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    padding: 4px 6px 2px;
+    position: relative;
+  }
+
+  .mute-btn {
+    margin-left: auto;
+    font-size: 18px;
+    background: linear-gradient(180deg, var(--key-top), var(--key));
+    border: none;
+    border-radius: 6px;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 var(--shell-deep), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .mute-btn:hover { filter: brightness(1.15); }
+  .mute-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+  .control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .keys { display: flex; gap: 4px; }
+
+  kbd {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--key-text);
+    background: linear-gradient(180deg, var(--key-top), var(--key));
+    border-radius: 5px;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 var(--shell-deep), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  kbd.wide { min-width: 58px; }
+
+  .control .does {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 0.3px;
+  }
+
+  .goal {
+    text-align: center;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .goal .hl { color: var(--marquee); }
+</style>
+
+<div class="cabinet">
+  <div class="marquee">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" role="img" aria-label="Pixel Plumber logo">
+        <rect x="0" y="0" width="40" height="40" rx="8" fill="var(--shell-deep)" stroke="var(--marquee)" stroke-width="2"/>
+        <g transform="translate(6,6)">
+          <rect x="14" y="0" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="10" y="4" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="6" y="8" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="10" y="12" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="14" y="16" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="18" y="20" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="18" y="16" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="22" y="12" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="18" y="8" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="22" y="4" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="18" y="0" width="4" height="4" fill="var(--marquee)"/>
+          <rect x="2" y="20" width="6" height="6" rx="1" fill="var(--sky)"/>
+        </g>
+      </svg>
+      <h1>Pixel Plumber</h1>
     </div>
-    <canvas id="game" width="960" height="540"></canvas>
-    <div id="overlay" class="hidden">
-      <h1 id="overlay-title">Game Over</h1>
-      <p id="overlay-text"></p>
-      <button id="overlay-btn">Restart</button>
-    </div>
-    <p id="hint">Arrow keys / A-D to move, Space or Up to jump. Stomp enemies, grab coins, reach the flag!</p>
+    <div class="tag">A five-level platformer</div>
   </div>
-  <script src="game.js"></script>
-</body>
-</html>
+
+  <div class="shell">
+    <div class="scoreboard">
+      <div class="stat level">
+        <span class="label">Level</span>
+        <span class="value" id="level">1/5</span>
+      </div>
+      <div class="stat score">
+        <span class="label">Score</span>
+        <span class="value" id="score">0</span>
+      </div>
+      <div class="stat coins">
+        <span class="label">Coins</span>
+        <span class="value" id="coins">0</span>
+      </div>
+      <div class="stat lives">
+        <span class="label">Lives</span>
+        <span class="value" id="lives">3</span>
+      </div>
+    </div>
+
+    <div class="screen-frame">
+      <div class="screen">
+        <canvas id="game" width="960" height="540"></canvas>
+        <div class="scanlines"></div>
+        <div class="screen-glare"></div>
+        <div id="overlay" class="hidden">
+          <h1 id="overlay-title">Game Over</h1>
+          <p id="overlay-text"></p>
+          <button id="overlay-btn">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <div class="keys">
+          <kbd>&larr;</kbd><kbd>&rarr;</kbd>
+        </div>
+        <span class="does">or A / D to move</span>
+      </div>
+      <div class="control">
+        <kbd class="wide">Space</kbd>
+        <span class="does">or &uarr; / W to jump</span>
+      </div>
+      <button id="mute-btn" class="mute-btn" aria-label="Mute">&#128266;</button>
+    </div>
+  </div>
+
+  <p class="goal">Stomp goombas &middot; grab <span class="hl">coins</span> &middot; reach the flag</p>
+</div>
+
+<script>
+// ---- Pixel Plumber: a tiny Mario-style platformer ----
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const GRAVITY = 0.6;
+const FRICTION = 0.8;
+const MOVE_SPEED = 4.2;
+const JUMP_FORCE = -13.5;
+const TILE = 40;
+
+const scoreEl = document.getElementById('score');
+const coinsEl = document.getElementById('coins');
+const livesEl = document.getElementById('lives');
+const levelEl = document.getElementById('level');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlayText = document.getElementById('overlay-text');
+const overlayBtn = document.getElementById('overlay-btn');
+const muteBtn = document.getElementById('mute-btn');
+
+// ---- Retro sound effects (synthesized, no audio files) ----
+let audioCtx = null;
+let muted = false;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq, start, duration, { type = 'square', volume = 0.16, slideTo = null } = {}) {
+  if (muted || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+  if (slideTo) osc.frequency.linearRampToValueAtTime(slideTo, audioCtx.currentTime + start + duration);
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime + start);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime + start);
+  osc.stop(audioCtx.currentTime + start + duration);
+}
+const sfx = {
+  jump: () => tone(440, 0, 0.12, { type: 'square', slideTo: 740 }),
+  coin: () => { tone(988, 0, 0.07, { type: 'square' }); tone(1319, 0.06, 0.12, { type: 'square' }); },
+  stomp: () => tone(220, 0, 0.1, { type: 'square', slideTo: 90 }),
+  hit: () => tone(180, 0, 0.35, { type: 'sawtooth', slideTo: 60 }),
+  levelUp: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, { type: 'square' })); },
+  win: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.11, 0.22, { type: 'square' })); },
+};
+if (muteBtn) {
+  muteBtn.addEventListener('click', () => {
+    ensureAudio();
+    muted = !muted;
+    muteBtn.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+    muteBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+  });
+}
+
+const keys = {};
+const NAV_KEYS = ['Space', ' ', 'Spacebar', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+function setKey(e, val) {
+  if (e.code) keys[e.code] = val;
+  if (e.key) keys[e.key] = val;
+}
+window.addEventListener('keydown', e => {
+  ensureAudio();
+  setKey(e, true);
+  if (NAV_KEYS.includes(e.code) || NAV_KEYS.includes(e.key)) e.preventDefault();
+});
+window.addEventListener('keyup', e => { setKey(e, false); });
+canvas.addEventListener('pointerdown', ensureAudio);
+
+function isDown(...names) {
+  return names.some(n => keys[n]);
+}
+
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// A level's walkable ground is a chain of solid strips (in tiles) separated by
+// gaps ("pattern"); building it from lengths+gaps (rather than hand-typed
+// absolute coordinates) is what guarantees the segments never overlap or
+// leave an arithmetic gap wider than intended.
+function buildGround(pattern) {
+  const segments = [];
+  let cursor = 0;
+  for (const seg of pattern) {
+    segments.push([cursor, cursor + seg.len]);
+    cursor += seg.len + seg.gap;
+  }
+  return segments;
+}
+
+function makeLevel(spec) {
+  const segments = buildGround(spec.pattern);
+  const platforms = segments.map(([s, e]) => ({
+    x: s * TILE, y: 12 * TILE, w: (e - s) * TILE, h: 1 * TILE + 40,
+  }));
+
+  // Bonus platforms are auto-centered inside their segment (never touching
+  // its edges) so a floating platform can never overlap the pit beside it.
+  const bonusPlatforms = [];
+  for (const segIdx of spec.bonusSegments || []) {
+    const [s, e] = segments[segIdx];
+    const segW = e - s;
+    if (segW < 7) continue;
+    const w = Math.min(3, segW - 4);
+    const x = s + Math.floor((segW - w) / 2);
+    // A thin slab, not a full tile: dropping the platform to make the jump-up
+    // easier also shrank the gap above a standing player's head to zero,
+    // which blocked jumping at all while standing underneath it.
+    const platform = { x: x * TILE, y: 10 * TILE, w: w * TILE, h: 16 };
+    platforms.push(platform);
+    bonusPlatforms.push(platform);
+  }
+
+  const pits = [];
+  for (let i = 0; i < segments.length - 1; i++) {
+    const gap = segments[i + 1][0] - segments[i][1];
+    if (gap > 0) pits.push({ x: segments[i][1] * TILE, w: gap * TILE });
+  }
+
+  const coins = [];
+  for (const p of bonusPlatforms) {
+    coins.push({ x: p.x + p.w / 2 - 28, y: p.y - 32, w: 24, h: 24, taken: false });
+    coins.push({ x: p.x + p.w / 2 + 4, y: p.y - 32, w: 24, h: 24, taken: false });
+  }
+  for (const [tx, ty] of spec.coins || []) {
+    coins.push({ x: tx * TILE + 8, y: ty * TILE + 8, w: 24, h: 24, taken: false });
+  }
+
+  const speed = spec.enemySpeed || 1.6;
+  const lastSegment = segments[segments.length - 1];
+  const enemies = (spec.enemies || []).map(e => {
+    // Keep every patrol at least 3 tiles clear of the pit at the end of its
+    // segment — an enemy patrolling right up to a pit's edge can force a
+    // dodge-jump that also eats the runway the very next jump needs.
+    // If x sits over a pit (no segment contains it), "home" is the nearest
+    // segment before it — falling back to the *last* segment here would
+    // relocate the enemy's whole range to the far end of the level.
+    const home = segments.find(([s, en]) => e.x >= s && e.x < en)
+      || [...segments].reverse().find(([s]) => s <= e.x)
+      || segments[0];
+    const [segStart, segEnd] = home;
+    const isLast = home === lastSegment;
+    const lower = Math.max(e.range[0], segStart + 1);
+    const upper = isLast ? Math.max(e.range[1], lower + 1) : Math.max(Math.min(e.range[1], segEnd - 3), lower + 1);
+    const x = Math.min(Math.max(e.x, lower), upper);
+    return {
+      x: x * TILE, y: (e.row || 12) * TILE - 32, w: 32, h: 32, dir: e.dir,
+      range: [lower * TILE, upper * TILE], alive: true, speed,
+    };
+  });
+
+  const lastEnd = segments[segments.length - 1][1];
+  const flag = { x: spec.flagX * TILE, y: 4 * TILE, w: 12, h: 8 * TILE };
+
+  return { platforms, coins, enemies, pits, flag, levelWidth: lastEnd * TILE };
+}
+
+const LEVELS = [
+  { // 1 — Green Hills
+    pattern: [{ len: 14, gap: 1 }, { len: 6, gap: 1 }, { len: 14, gap: 1 }, { len: 20, gap: 1 }, { len: 22, gap: 0 }],
+    bonusSegments: [2, 3, 4],
+    coins: [[59, 11], [61, 11]],
+    enemies: [
+      { x: 17, range: [15, 20], dir: -1 }, { x: 28, range: [22, 35], dir: 1 },
+      { x: 45, range: [37, 56], dir: 1 }, { x: 62, range: [58, 79], dir: -1 },
+      { x: 70, range: [58, 79], dir: 1 },
+    ],
+    flagX: 75, enemySpeed: 1.6,
+  },
+  { // 2 — Cloud Steppes
+    pattern: [{ len: 10, gap: 2 }, { len: 6, gap: 2 }, { len: 10, gap: 2 }, { len: 12, gap: 2 }, { len: 14, gap: 2 }, { len: 30, gap: 0 }],
+    bonusSegments: [1, 3, 4, 5],
+    coins: [],
+    enemies: [
+      { x: 15, range: [12, 17], dir: -1 }, { x: 24, range: [20, 29], dir: 1 },
+      { x: 36, range: [32, 43], dir: -1 }, { x: 50, range: [46, 59], dir: 1 },
+      { x: 66, range: [62, 91], dir: -1 }, { x: 80, range: [62, 91], dir: 1 },
+    ],
+    flagX: 86, enemySpeed: 1.8,
+  },
+  { // 3 — Rusty Pipeworks
+    pattern: [{ len: 8, gap: 2 }, { len: 6, gap: 2 }, { len: 8, gap: 2 }, { len: 10, gap: 2 }, { len: 10, gap: 2 }, { len: 12, gap: 2 }, { len: 14, gap: 2 }, { len: 18, gap: 0 }],
+    bonusSegments: [1, 3, 5, 6],
+    coins: [],
+    enemies: [
+      { x: 11, range: [8, 14], dir: -1 }, { x: 19, range: [16, 24], dir: 1 },
+      { x: 30, range: [26, 36], dir: -1 }, { x: 44, range: [40, 50], dir: 1 },
+      { x: 56, range: [52, 64], dir: -1 }, { x: 70, range: [66, 80], dir: 1 },
+      { x: 86, range: [82, 100], dir: -1 },
+    ],
+    flagX: 96, enemySpeed: 2.0,
+  },
+  { // 4 — Sky Foundry
+    pattern: [{ len: 8, gap: 2 }, { len: 4, gap: 2 }, { len: 8, gap: 2 }, { len: 8, gap: 2 }, { len: 10, gap: 2 }, { len: 10, gap: 2 }, { len: 10, gap: 2 }, { len: 12, gap: 2 }, { len: 24, gap: 0 }],
+    bonusSegments: [2, 4, 6, 8],
+    coins: [],
+    enemies: [
+      { x: 9, range: [8, 12], dir: -1 }, { x: 15, range: [14, 20], dir: 1 },
+      { x: 26, range: [22, 30], dir: -1 }, { x: 38, range: [34, 44], dir: 1 },
+      { x: 50, range: [46, 58], dir: -1 }, { x: 64, range: [60, 70], dir: 1 },
+      { x: 76, range: [72, 82], dir: -1 }, { x: 92, range: [86, 110], dir: 1 },
+    ],
+    flagX: 104, enemySpeed: 2.2,
+  },
+  { // 5 — Final Ascent
+    pattern: [{ len: 6, gap: 2 }, { len: 4, gap: 2 }, { len: 6, gap: 2 }, { len: 6, gap: 2 }, { len: 8, gap: 2 }, { len: 8, gap: 2 }, { len: 8, gap: 2 }, { len: 8, gap: 2 }, { len: 10, gap: 2 }, { len: 10, gap: 2 }, { len: 28, gap: 0 }],
+    bonusSegments: [4, 6, 8, 10],
+    coins: [],
+    enemies: [
+      { x: 7, range: [6, 10], dir: -1 }, { x: 11, range: [10, 14], dir: 1 },
+      { x: 19, range: [16, 22], dir: -1 }, { x: 29, range: [26, 34], dir: 1 },
+      { x: 39, range: [36, 44], dir: -1 }, { x: 49, range: [46, 54], dir: 1 },
+      { x: 59, range: [56, 64], dir: -1 }, { x: 69, range: [66, 74], dir: 1 },
+      { x: 80, range: [76, 86], dir: -1 }, { x: 96, range: [92, 120], dir: 1 },
+    ],
+    flagX: 114, enemySpeed: 2.4,
+  },
+];
+
+let levelIndex = 0;
+let level = makeLevel(LEVELS[levelIndex]);
+
+function makePlayer() {
+  return {
+    x: 60, y: 300, w: 30, h: 40,
+    vx: 0, vy: 0,
+    onGround: false,
+    facing: 1,
+    invuln: 0,
+  };
+}
+
+let player = makePlayer();
+let camX = 0;
+let score = 0, coins = 0, lives = 3;
+let state = 'playing';
+
+function loadLevel(idx) {
+  levelIndex = idx;
+  level = makeLevel(LEVELS[levelIndex]);
+  player = makePlayer();
+  camX = 0;
+  updateHud();
+}
+
+function resetGame() {
+  score = 0; coins = 0; lives = 3;
+  state = 'playing';
+  loadLevel(0);
+  overlay.classList.add('hidden');
+}
+
+function loseLife() {
+  lives--;
+  updateHud();
+  sfx.hit();
+  if (lives <= 0) {
+    state = 'dead';
+    showOverlay('Game Over', `Final score: ${score}`, 'Restart');
+  } else {
+    player = makePlayer();
+    player.x = Math.max(60, camX + 60);
+    camX = Math.max(0, player.x - 200);
+  }
+}
+
+function showOverlay(title, text, buttonLabel) {
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  overlayBtn.textContent = buttonLabel;
+  overlay.classList.remove('hidden');
+}
+
+overlayBtn.addEventListener('click', () => {
+  if (state === 'levelup') {
+    state = 'playing';
+    loadLevel(levelIndex + 1);
+    overlay.classList.add('hidden');
+  } else {
+    resetGame();
+  }
+});
+
+function updateHud() {
+  scoreEl.textContent = score;
+  coinsEl.textContent = coins;
+  livesEl.textContent = lives;
+  levelEl.textContent = `${levelIndex + 1}/${LEVELS.length}`;
+}
+
+function update() {
+  if (state !== 'playing') return;
+
+  if (isDown('ArrowLeft', 'Left', 'KeyA', 'a', 'A')) {
+    player.vx -= 0.9;
+    player.facing = -1;
+  }
+  if (isDown('ArrowRight', 'Right', 'KeyD', 'd', 'D')) {
+    player.vx += 0.9;
+    player.facing = 1;
+  }
+  player.vx *= FRICTION;
+  if (Math.abs(player.vx) > MOVE_SPEED) player.vx = MOVE_SPEED * Math.sign(player.vx);
+  if (Math.abs(player.vx) < 0.05) player.vx = 0;
+
+  if (isDown('Space', ' ', 'Spacebar', 'ArrowUp', 'Up', 'KeyW', 'w', 'W') && player.onGround) {
+    player.vy = JUMP_FORCE;
+    player.onGround = false;
+    sfx.jump();
+  }
+
+  player.vy += GRAVITY;
+  if (player.vy > 18) player.vy = 18;
+
+  // Move vertically first and resolve collisions, so a player landing on top
+  // of a platform is snapped onto it before the horizontal pass runs.
+  player.y += player.vy;
+  player.onGround = false;
+  for (const p of level.platforms) {
+    if (rectsOverlap(player, p)) {
+      if (player.vy > 0) {
+        player.y = p.y - player.h;
+        player.vy = 0;
+        player.onGround = true;
+      } else if (player.vy < 0) {
+        player.y = p.y + p.h;
+        player.vy = 0;
+      }
+    }
+  }
+
+  player.x += player.vx;
+  player.x = Math.max(0, Math.min(player.x, level.levelWidth - player.w));
+  for (const p of level.platforms) {
+    if (rectsOverlap(player, p)) {
+      if (player.vx > 0) player.x = p.x - player.w;
+      else if (player.vx < 0) player.x = p.x + p.w;
+      player.vx = 0;
+    }
+  }
+
+  if (player.invuln > 0) player.invuln--;
+
+  if (player.y > H + 100) {
+    loseLife();
+    return;
+  }
+
+  for (const c of level.coins) {
+    if (!c.taken && rectsOverlap(player, c)) {
+      c.taken = true;
+      coins++;
+      score += 100;
+      updateHud();
+      sfx.coin();
+    }
+  }
+
+  for (const e of level.enemies) {
+    if (!e.alive) continue;
+    e.x += e.dir * e.speed;
+    if (e.x < e.range[0] || e.x + e.w > e.range[1]) e.dir *= -1;
+
+    if (rectsOverlap(player, e)) {
+      const playerBottom = player.y + player.h;
+      const stomping = player.vy > 0 && playerBottom - e.h / 2 < e.y + e.h * 0.5;
+      if (stomping) {
+        e.alive = false;
+        player.vy = JUMP_FORCE * 0.6;
+        score += 200;
+        updateHud();
+        sfx.stomp();
+      } else if (player.invuln === 0) {
+        loseLife();
+        player.invuln = 90;
+        return;
+      }
+    }
+  }
+
+  if (rectsOverlap(player, level.flag)) {
+    if (levelIndex < LEVELS.length - 1) {
+      state = 'levelup';
+      showOverlay(`Level ${levelIndex + 1} Complete!`, `Score: ${score} — onward to level ${levelIndex + 2}`, 'Next Level');
+      sfx.levelUp();
+    } else {
+      state = 'won';
+      showOverlay('You Win!', `All ${LEVELS.length} levels cleared — Score: ${score} | Coins: ${coins}`, 'Play Again');
+      sfx.win();
+    }
+  }
+
+  camX = Math.max(0, Math.min(player.x - W / 2.5, level.levelWidth - W));
+}
+
+function drawBackground() {
+  ctx.fillStyle = '#5c94fc';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#3aa447';
+  for (let i = -1; i < 6; i++) {
+    const bx = i * 260 - (camX * 0.3) % 260;
+    ctx.beginPath();
+    ctx.arc(bx + 130, H - 40, 90, Math.PI, 0);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = -1; i < 8; i++) {
+    const cx = i * 300 - (camX * 0.5) % 300;
+    drawCloud(cx + 80, 70 + (i % 3) * 20);
+  }
+}
+
+function drawCloud(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 18, 0, Math.PI * 2);
+  ctx.arc(x + 20, y - 8, 22, 0, Math.PI * 2);
+  ctx.arc(x + 42, y, 18, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawPlatforms() {
+  for (const p of level.platforms) {
+    const sx = p.x - camX;
+    if (sx + p.w < 0 || sx > W) continue;
+    ctx.fillStyle = '#8b5a2b';
+    ctx.fillRect(sx, p.y, p.w, p.h);
+    ctx.fillStyle = '#3aa447';
+    ctx.fillRect(sx, p.y, p.w, 10);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    for (let gx = 0; gx < p.w; gx += TILE) {
+      ctx.strokeRect(sx + gx, p.y, TILE, p.h);
+    }
+  }
+}
+
+function drawCoins() {
+  for (const c of level.coins) {
+    if (c.taken) continue;
+    const sx = c.x - camX;
+    if (sx + c.w < 0 || sx > W) continue;
+    ctx.fillStyle = '#ffd54a';
+    ctx.beginPath();
+    ctx.arc(sx + c.w / 2, c.y + c.h / 2, c.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#c98f0a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function drawEnemies() {
+  for (const e of level.enemies) {
+    if (!e.alive) continue;
+    const sx = e.x - camX;
+    if (sx + e.w < 0 || sx > W) continue;
+    ctx.fillStyle = '#8b4513';
+    ctx.fillRect(sx, e.y, e.w, e.h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(sx + 6, e.y + 8, 6, 6);
+    ctx.fillRect(sx + e.w - 12, e.y + 8, 6, 6);
+    ctx.fillStyle = '#5a2d0c';
+    ctx.fillRect(sx, e.y + e.h - 8, e.w, 8);
+  }
+}
+
+function drawFlag() {
+  const f = level.flag;
+  const sx = f.x - camX;
+  ctx.fillStyle = '#ccc';
+  ctx.fillRect(sx, f.y, 6, f.h);
+  ctx.fillStyle = '#e52521';
+  ctx.beginPath();
+  ctx.moveTo(sx + 6, f.y + 6);
+  ctx.lineTo(sx + 46, f.y + 20);
+  ctx.lineTo(sx + 6, f.y + 34);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawPits() {
+  for (const p of level.pits) {
+    const sx = p.x - camX;
+    ctx.fillStyle = '#0d1436';
+    ctx.fillRect(sx, 12 * TILE, p.w, H - 12 * TILE);
+  }
+}
+
+function drawPlayer() {
+  const sx = player.x - camX;
+  if (player.invuln > 0 && Math.floor(player.invuln / 5) % 2 === 0) return;
+
+  ctx.save();
+  ctx.translate(sx + player.w / 2, player.y + player.h / 2);
+  ctx.scale(player.facing, 1);
+
+  // Overalls
+  ctx.fillStyle = '#1f7a8c';
+  ctx.fillRect(-player.w / 2, -player.h / 2 + 14, player.w, player.h - 14);
+  // Face
+  ctx.fillStyle = '#f6b98f';
+  ctx.fillRect(-player.w / 2 + 4, -player.h / 2, player.w - 8, 18);
+  // Cap
+  ctx.fillStyle = '#ffb347';
+  ctx.fillRect(-player.w / 2 + 2, -player.h / 2 - 4, player.w - 4, 8);
+  ctx.fillRect(player.w / 2 - 10, -player.h / 2, 12, 4);
+  // Goggles
+  ctx.fillStyle = '#2a2032';
+  ctx.fillRect(-player.w / 2 + 3, -player.h / 2 + 6, player.w - 6, 5);
+  ctx.fillStyle = '#5c94fc';
+  ctx.fillRect(-player.w / 2 + 5, -player.h / 2 + 6, 6, 5);
+  ctx.fillRect(player.w / 2 - 11, -player.h / 2 + 6, 6, 5);
+
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawPits();
+  drawPlatforms();
+  drawCoins();
+  drawFlag();
+  drawEnemies();
+  drawPlayer();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+updateHud();
+loop();
+</script>
